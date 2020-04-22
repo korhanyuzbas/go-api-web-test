@@ -4,7 +4,7 @@ import (
 	"github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"log"
-	"sancap/internal/models"
+	"sancap/internal/app/models"
 	"time"
 )
 

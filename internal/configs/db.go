@@ -9,18 +9,18 @@ var DB *gorm.DB
 
 type DBConfig struct {
 	Host     string
-	Port     int
+	Port     string
 	User     string
-	DBName   string
+	Name     string
 	Password string
 }
 
 func BuildDBConfig() *DBConfig {
 	dbConfig := DBConfig{
 		Host:     "localhost",
-		Port:     5432,
+		Port:     "5432",
 		User:     "postgres",
-		DBName:   "gorestful",
+		Name:     "gorestful",
 		Password: "postgres",
 	}
 	return &dbConfig
@@ -28,11 +28,11 @@ func BuildDBConfig() *DBConfig {
 
 func DbURL(dbConfig *DBConfig) string {
 	return fmt.Sprintf(
-		"host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
 		dbConfig.Host,
 		dbConfig.Port,
 		dbConfig.User,
-		dbConfig.DBName,
+		dbConfig.Name,
 		dbConfig.Password,
 	)
 }

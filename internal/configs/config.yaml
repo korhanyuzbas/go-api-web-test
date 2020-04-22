@@ -1,0 +1,21 @@
+default: &default
+  name: Sancap
+  http:
+    host: 0.0.0.0
+    port: 8080
+  database:
+    user: postgres
+    password: postgres
+    host: localhost
+    port: 5432
+  templatedir: /home/korhan/Projects/Go/sancap/internal/web/templates/**/*
+
+development:
+  <<: *default
+  database:
+    name: sancap
+
+test:
+  <<: *default
+  database:
+    name: sancap_test
