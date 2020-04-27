@@ -4,7 +4,7 @@ import (
 	"github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"log"
-	"sancap/internal/app/models"
+	"sancap/internal/models"
 	"time"
 )
 
@@ -16,7 +16,7 @@ func Authentication() *jwt.GinJWTMiddleware {
 		MaxRefresh:  time.Hour,
 		IdentityKey: "id",
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*models.UserModel); ok {
+			if v, ok := data.(*models.User); ok {
 				return jwt.MapClaims{
 					"id": v.Username,
 				}
@@ -25,27 +25,27 @@ func Authentication() *jwt.GinJWTMiddleware {
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
-			return &models.UserModel{
+			return &models.User{
 				Username: claims["id"].(string),
 			}
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
-			var loginVals models.UserModel
-			if err := c.ShouldBind(&loginVals); err != nil {
+			var user models.User
+			if err := c.ShouldBind(&user); err != nil {
 				return "", jwt.ErrMissingLoginValues
 			}
-			username := loginVals.Username
-			password := loginVals.Password
+			username := user.Username
+			password := user.Password
 
-			if err := models.GetUserCred(&loginVals, username, password); err != nil {
+			if err := user.GetCredentials(username, password); err != nil {
 				return nil, err
 			}
-			return &loginVals, nil
+			return &user, nil
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			var authModel models.UserModel
-			if v, ok := data.(*models.UserModel); ok {
-				if err := models.GetUserByName(&authModel, v.Username); err != nil {
+			var authModel models.User
+			if v, ok := data.(*models.User); ok {
+				if err := authModel.GetByName(v.Username); err != nil {
 					return false
 				}
 				if !authModel.IsActive {

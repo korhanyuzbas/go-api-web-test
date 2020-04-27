@@ -5,18 +5,16 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"log"
-	"sancap/internal/app/middlewares"
-	"sancap/internal/app/routers"
+	"sancap/internal"
 	"sancap/internal/configs"
+	"sancap/internal/models"
 )
 
 var err error
 
-func runServer() (err error) {
-	authMiddleware := middlewares.Authentication()
-	router := routers.SetupRouter(authMiddleware) // setup routers
-
-	return router.Run()
+func runServer(port string) (err error) {
+	router := internal.SetupRouter() // setup routers
+	return router.Run(":" + port)
 }
 
 func main() {
@@ -51,6 +49,6 @@ func main() {
 	}
 
 	defer configs.DB.Close()
-
-	log.Panicln(runServer())
+	configs.DB.AutoMigrate(&models.User{})
+	log.Panicln(runServer(config.HTTP.Port))
 }

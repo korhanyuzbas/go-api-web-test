@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+{{if .error}}
+    {{.error}}
+{{end}}
+{{if .user}}
+    vayy hoşgeldin {{.user.Username}} kardeşim
+{{end}}
+<form action="/user/register" method="post">
+    <p><input type="text" placeholder="ad" name="first_name"/></p>
+    <p><input type="text" placeholder="soyad" name="last_name"/></p>
+    <p><input type="text" placeholder="kullanıcı adı" name="username"/></p>
+    <p><input type="password" placeholder="şifre" name="password"/></p>
+    <button type="submit" value="gönder">gönderrr</button>
+</form>
+</body>
+</html>
