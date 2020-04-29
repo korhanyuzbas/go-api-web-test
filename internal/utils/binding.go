@@ -1,10 +1,11 @@
-package configs
+package utils
 
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	"sancap/internal/configs"
 	"strings"
 )
 
@@ -35,7 +36,7 @@ func BindParams(c *gin.Context, params interface{}) error {
 }
 
 func getValidator(c *gin.Context) (*validator.Validate, error) {
-	val, ok := c.Get(ValidatorKey)
+	val, ok := c.Get(configs.ValidatorKey)
 	if !ok {
 		return nil, errors.New("validator is not set")
 	}
@@ -47,7 +48,7 @@ func getValidator(c *gin.Context) (*validator.Validate, error) {
 }
 
 func getTranslation(c *gin.Context) (ut.Translator, error) {
-	trans, ok := c.Get(TranslatorKey)
+	trans, ok := c.Get(configs.TranslatorKey)
 	if !ok {
 		return nil, errors.New("translator is not set")
 	}

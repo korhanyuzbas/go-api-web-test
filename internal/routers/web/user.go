@@ -1,16 +1,17 @@
 package web
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"sancap/internal/handlers/web"
+	"sancap/internal/middlewares"
 )
 
-func setupUserRouter(router *gin.Engine, m *jwt.GinJWTMiddleware) *gin.Engine {
+func setupUserRouter(router *gin.Engine) *gin.Engine {
 	user := router.Group("user")
-	user.Use(m.MiddlewareFunc())
 	{
-		user.GET("me", web.UserMe)
+		user.Use(middlewares.TranslationMiddleware())
+		user.GET("register", web.CreateUser)
+		user.POST("register", web.CreateUser)
 	}
 	return router
 }

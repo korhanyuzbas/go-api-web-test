@@ -17,10 +17,10 @@ func userValidations(validate *validator.Validate) {
 			Password:  userInput.Password,
 		}
 		name := fl.Field().String()
-		if user.IsUsernameExists(name) {
-			return false
+		if user.IsUsernameAvailable(name) {
+			return true
 		}
-		return true
+		return false
 	}); err != nil {
 		log.Panicln(err)
 	}

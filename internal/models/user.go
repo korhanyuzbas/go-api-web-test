@@ -35,8 +35,8 @@ func (user *User) Create() (err error) {
 	return nil
 }
 
-func (user *User) IsUsernameExists(username string) bool {
-	if !configs.DB.Where("username = ?", username).First(user).RecordNotFound() {
+func (user *User) IsUsernameAvailable(username string) bool {
+	if configs.DB.Where("username = ?", username).First(user).RecordNotFound() {
 		return true
 	}
 	return false

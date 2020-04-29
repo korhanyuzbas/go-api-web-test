@@ -5,15 +5,15 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"log"
-	"sancap/internal"
 	"sancap/internal/configs"
 	"sancap/internal/models"
+	"sancap/internal/routers"
 )
 
 var err error
 
 func runServer(port string) (err error) {
-	router := internal.SetupRouter() // setup routers
+	router := routers.SetupRouter() // setup routers
 	return router.Run(":" + port)
 }
 

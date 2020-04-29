@@ -10,5 +10,6 @@ require (
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jinzhu/gorm v1.9.12
+	github.com/stretchr/testify v1.4.0
 	gopkg.in/yaml.v2 v2.2.8
 )

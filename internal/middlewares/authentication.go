@@ -4,6 +4,7 @@ import (
 	"github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"log"
+	"sancap/internal/configs"
 	"sancap/internal/models"
 	"time"
 )
@@ -14,11 +15,11 @@ func Authentication() *jwt.GinJWTMiddleware {
 		Key:         []byte("somesting"),
 		Timeout:     time.Hour,
 		MaxRefresh:  time.Hour,
-		IdentityKey: "id",
+		IdentityKey: configs.JwtKey,
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*models.User); ok {
 				return jwt.MapClaims{
-					"id": v.Username,
+					configs.JwtKey: v.Username,
 				}
 			}
 			return jwt.MapClaims{}
@@ -26,7 +27,7 @@ func Authentication() *jwt.GinJWTMiddleware {
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
 			return &models.User{
-				Username: claims["id"].(string),
+				Username: claims[configs.JwtKey].(string),
 			}
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
