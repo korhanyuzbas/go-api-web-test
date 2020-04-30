@@ -5,14 +5,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"sancap/internal/configs"
+	"sancap/internal/dto"
 	"sancap/internal/models"
 	"time"
 )
 
-func Authentication() *jwt.GinJWTMiddleware {
-	authMiddleware, authErr := jwt.New(&jwt.GinJWTMiddleware{
+func getDefaultMiddleware() *jwt.GinJWTMiddleware {
+	return &jwt.GinJWTMiddleware{
 		Realm:       "test",
-		Key:         []byte("somesting"),
+		Key:         []byte(configs.AppConfig.SecretKey),
 		Timeout:     time.Hour,
 		MaxRefresh:  time.Hour,
 		IdentityKey: configs.JwtKey,
@@ -31,14 +32,19 @@ func Authentication() *jwt.GinJWTMiddleware {
 			}
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
-			var user models.User
-			if err := c.ShouldBind(&user); err != nil {
+			userLoginInput := dto.LoginUserInput{}
+			if err := userLoginInput.ShouldBind(c); err != nil {
 				return "", jwt.ErrMissingLoginValues
 			}
-			username := user.Username
-			password := user.Password
+			username := userLoginInput.Username
+			password := userLoginInput.Password
 
-			if err := user.GetCredentials(username, password); err != nil {
+			user := models.User{
+				Username: username,
+				Password: []byte(password),
+			}
+
+			if err := user.GetCredentials(userLoginInput.Password); err != nil {
 				return nil, err
 			}
 			return &user, nil
@@ -65,9 +71,30 @@ func Authentication() *jwt.GinJWTMiddleware {
 		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
-	})
+		SendCookie:    true,
+	}
+}
+
+func AuthenticationWeb() *jwt.GinJWTMiddleware {
+	defaultMiddleware := getDefaultMiddleware()
+	defaultMiddleware.SendCookie = true
+
+	authMiddleware, authErr := jwt.New(defaultMiddleware)
 	if authErr != nil {
 		log.Fatal("JWT error: " + authErr.Error())
 	}
+
+	return authMiddleware
+}
+
+func AuthenticationAPI() *jwt.GinJWTMiddleware {
+	defaultMiddleware := getDefaultMiddleware()
+	defaultMiddleware.SendCookie = false
+
+	authMiddleware, authErr := jwt.New(defaultMiddleware)
+	if authErr != nil {
+		log.Fatal("JWT error: " + authErr.Error())
+	}
+
 	return authMiddleware
 }

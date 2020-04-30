@@ -24,3 +24,13 @@ type LoginUserInput struct {
 func (params *LoginUserInput) ShouldBind(ctx *gin.Context) error {
 	return utils.BindParams(ctx, params)
 }
+
+type ChangePasswordInput struct {
+	OldPassword  string `json:"old_password" form:"old_password" validate:"required"`
+	NewPassword  string `json:"new_password" form:"new_password" validate:"required"`
+	NewPassword2 string `json:"new_password2" form:"new_password2" validate:"required,eqfield=NewPassword"`
+}
+
+func (params *ChangePasswordInput) ShouldBind(ctx *gin.Context) error {
+	return utils.BindParams(ctx, params)
+}

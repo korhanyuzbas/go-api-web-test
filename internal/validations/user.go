@@ -14,7 +14,7 @@ func userValidations(validate *validator.Validate) {
 			FirstName: userInput.FirstName,
 			LastName:  userInput.LastName,
 			Username:  userInput.Username,
-			Password:  userInput.Password,
+			Password:  []byte(userInput.Password),
 		}
 		name := fl.Field().String()
 		if user.IsUsernameAvailable(name) {

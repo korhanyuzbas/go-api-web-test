@@ -14,8 +14,10 @@ development:
   <<: *default
   database:
     name: sancap
+  secretkey: SB6sd%Eaqt=Z7WmeTcP3w7-Hj+k!dLmu=uSzbRdZ&AMZ@QtK8h#Jw+7#2JdcLkdm
 
 test:
   <<: *default
   database:
     name: sancap_test
+  secretkey: Df4y+JLxsg*MKy8YU?t93kaGP2bcmu^eKk8Q3m^PVmMLbMEMw+?$wqynmzDmbuw+

@@ -8,7 +8,7 @@ import (
 
 func SetupUserAPIRoutes(apiGroup *gin.RouterGroup) {
 	userAPIGroup := apiGroup.Group("user")
-	userAPIGroup.Use(middlewares.Authentication().MiddlewareFunc())
+	userAPIGroup.Use(middlewares.AuthenticationAPI().MiddlewareFunc())
 	{
 		userAPIGroup.GET("/", api.Index)
 		userAPIGroup.GET("/me", api.UserMe)

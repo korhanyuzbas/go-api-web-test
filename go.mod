@@ -11,5 +11,6 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/jinzhu/gorm v1.9.12
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 	gopkg.in/yaml.v2 v2.2.8
 )

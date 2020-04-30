@@ -24,6 +24,7 @@ type Option struct {
 	}
 	Environment string
 	TemplateDir string
+	SecretKey   string
 }
 
 var AppConfig *Option

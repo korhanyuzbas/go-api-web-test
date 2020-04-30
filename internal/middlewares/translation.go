@@ -5,7 +5,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	enTranslations "github.com/go-playground/validator/v10/translations/en"
+	trTranslations "github.com/go-playground/validator/v10/translations/tr"
 	"log"
 	"sancap/internal/configs"
 	"sancap/internal/i18n"
@@ -19,10 +19,10 @@ func TranslationMiddleware() gin.HandlerFunc {
 		uni := ut.New(enLang, enLang)
 		validate := validator.New()
 
-		locale := c.DefaultQuery("locale", "en")
+		locale := c.DefaultQuery("locale", "tr")
 		trans, _ := uni.GetTranslator(locale)
 
-		if err := enTranslations.RegisterDefaultTranslations(validate, trans); err != nil {
+		if err := trTranslations.RegisterDefaultTranslations(validate, trans); err != nil {
 			log.Panicln(err)
 		}
 
