@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sancap/internal/configs"
@@ -32,7 +31,6 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 	ctx.HTML(http.StatusCreated, "user.register.html", gin.H{"user": user, "error": nil})
-
 }
 
 func UserLogin(ctx *gin.Context) {
@@ -53,7 +51,8 @@ func UserLogin(ctx *gin.Context) {
 		ctx.HTML(http.StatusBadRequest, "user.login.html", gin.H{"error": err.Error(), "user": nil})
 		return
 	}
-	middlewares.AuthenticationWeb().LoginHandler(ctx) // set cookie for web user
+	middlewares.AuthenticationWeb().LoginHandler(ctx) // set cookie for web user with custom login handler
+	ctx.HTML(http.StatusOK, "user.login.html", gin.H{"error": nil, "user": user})
 }
 
 func UserMe(ctx *gin.Context) {
@@ -65,11 +64,22 @@ func UserMe(ctx *gin.Context) {
 func UserChangePassword(ctx *gin.Context) {
 	authid, _ := ctx.Get(configs.JwtKey)
 	user := authid.(*models.User)
-	fmt.Println(user.Username)
-	changePasswordInput := &dto.ChangePasswordInput{}
-	if err := changePasswordInput.ShouldBind(ctx); err != nil {
-		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"error": err.Error(), "user": nil})
+	if ctx.Request.Method == "GET" {
+		ctx.HTML(http.StatusOK, "user.change_password.html", gin.H{"user": user, "error": nil})
 		return
 	}
-	ctx.HTML(http.StatusOK, "user.change_password.html", gin.H{"user": nil, "error": nil})
+	changePasswordInput := &dto.ChangePasswordInput{}
+	if err := changePasswordInput.ShouldBind(ctx); err != nil {
+		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"error": err.Error(), "user": user})
+		return
+	}
+	if err := user.GetCredentials(changePasswordInput.OldPassword); err != nil {
+		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"user": user, "error": err.Error()})
+		return
+	}
+	if err := user.ChangePassword(changePasswordInput.NewPassword); err != nil {
+		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"user": user, "error": err.Error()})
+		return
+	}
+	ctx.HTML(http.StatusOK, "user.change_password.html", gin.H{"user": user, "error": nil})
 }

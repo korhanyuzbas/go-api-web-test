@@ -7,10 +7,11 @@ import (
 	"sancap/internal/configs"
 	"sancap/internal/dto"
 	"sancap/internal/models"
+	"sancap/internal/utils"
 	"time"
 )
 
-func getDefaultMiddleware() *jwt.GinJWTMiddleware {
+func getDefaultMiddleware(cookie bool) *jwt.GinJWTMiddleware {
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test",
 		Key:         []byte(configs.AppConfig.SecretKey),
@@ -71,13 +72,15 @@ func getDefaultMiddleware() *jwt.GinJWTMiddleware {
 		TokenLookup:   "header: Authorization, query: token, cookie: jwt",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
-		SendCookie:    true,
+		SendCookie:    cookie,
 	}
 }
 
 func AuthenticationWeb() *jwt.GinJWTMiddleware {
-	defaultMiddleware := getDefaultMiddleware()
-	defaultMiddleware.SendCookie = true
+	defaultMiddleware := getDefaultMiddleware(true)
+	defaultMiddleware.LoginResponse = func(context *gin.Context, i int, s string, t time.Time) {
+		utils.SetJWTCookie(s, context, defaultMiddleware)
+	}
 
 	authMiddleware, authErr := jwt.New(defaultMiddleware)
 	if authErr != nil {
@@ -88,8 +91,7 @@ func AuthenticationWeb() *jwt.GinJWTMiddleware {
 }
 
 func AuthenticationAPI() *jwt.GinJWTMiddleware {
-	defaultMiddleware := getDefaultMiddleware()
-	defaultMiddleware.SendCookie = false
+	defaultMiddleware := getDefaultMiddleware(false)
 
 	authMiddleware, authErr := jwt.New(defaultMiddleware)
 	if authErr != nil {

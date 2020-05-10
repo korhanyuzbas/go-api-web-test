@@ -6,6 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"sancap/internal/configs"
+	"sancap/internal/utils"
 	"time"
 )
 
@@ -18,6 +19,15 @@ type User struct {
 	IsActive    bool   `gorm:"default:false"`
 	IsSuperUser bool   `gorm:"default:false"`
 	DOB         *time.Time
+}
+
+type UserVerification struct {
+	gorm.Model
+	UserID     int
+	User       User
+	Code       string
+	Verified   bool
+	ExpiryDate *time.Time
 }
 
 type StudentModel struct {
@@ -53,8 +63,8 @@ func (user *User) GetByName(username string) (err error) {
 	return nil
 }
 
-func (user *User) GetCredentials(password string) (err error) {
-	if err = configs.DB.Where("username = ?", user.Username).Find(&user).Error; err != nil {
+func (user *User) GetCredentials(password string) error {
+	if err := configs.DB.Where("username = ?", user.Username).Find(user).Error; err != nil {
 		return err
 	}
 	if user.IsCorrectPassword(password) {
@@ -75,7 +85,9 @@ func (user *User) IsCorrectPassword(password string) bool {
 	return bcrypt.CompareHashAndPassword(user.Password, []byte(password)) == nil
 }
 
-func (user *User) ChangePassword(password string) bool {
-
-	return false
+func (user *User) ChangePassword(password string) error {
+	if err := configs.DB.Model(&user).Update("password", utils.HashPassword(password)); err != nil {
+		return err.Error
+	}
+	return nil
 }
