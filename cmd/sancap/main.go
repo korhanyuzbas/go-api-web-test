@@ -49,6 +49,6 @@ func main() {
 	}
 
 	defer configs.DB.Close()
-	configs.DB.AutoMigrate(&models.User{})
+	configs.DB.AutoMigrate(&models.User{}, &models.UserVerification{})
 	log.Panicln(runServer(config.HTTP.Port))
 }
