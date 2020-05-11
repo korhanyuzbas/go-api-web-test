@@ -6,7 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"path/filepath"
+	"reflect"
 	"regexp"
+	"runtime"
 	"sancap/internal/models"
 	"sancap/internal/routers"
 	"sancap/tests"
@@ -16,16 +19,31 @@ import (
 
 var router *gin.Engine
 
-func TestStart(t *testing.T) {
+type testFunc func(t *testing.T)
+
+func TestUser(t *testing.T) {
 	tests.Setup()
 	router = tests.SetupTestRouter()
-	t.Run("Login", UserLogin)
-	t.Run("Login_MissingParams", UserLoginMissingParams)
-	t.Run("UserLogin_WrongCredentials", UserLoginWrongCredentials)
-	t.Run("UserRegisterSuccess", UserRegisterSuccess)
-	t.Run("UserRegisterMissingFields", UserRegisterMissingFields)
-	t.Run("UserRegisterUsernameExists", UserRegisterUsernameExists)
-	t.Run("UserMe", UserMe)
+	funcs := []testFunc{
+		UserLogin,
+		UserLoginMissingParams,
+		UserLoginWrongCredentials,
+		UserRegisterSuccess,
+		UserRegisterMissingFields,
+		UserRegisterUsernameExists,
+		UserMe,
+		UserChangePasswordFailure,
+		UserChangePasswordSuccess,
+	}
+	for _, f := range funcs {
+		f := f
+		funcName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		funcName = filepath.Ext(funcName)
+		funcName = strings.TrimPrefix(funcName, ".")
+		t.Run(funcName, func(t *testing.T) {
+			f(t)
+		})
+	}
 	tests.TearDown()
 }
 
@@ -225,7 +243,125 @@ func UserMe(t *testing.T) {
 		nil,
 	)
 
-	bodyReader, _ := ioutil.ReadAll(w.Body)
-	fmt.Println(string(bodyReader))
 	assert.Equal(t, w.Code, 200)
+}
+
+func UserChangePasswordSuccess(t *testing.T) {
+	user := models.User{Password: []byte("123456"), IsActive: true}
+	if err := faker.FakeData(&user); err != nil {
+		fmt.Println(err.Error())
+		t.Fail()
+	}
+
+	if err := user.Create(); err != nil {
+		fmt.Println(err.Error())
+		t.Fail()
+	}
+
+	w := tests.PerformRequest(
+		router,
+		"POST",
+		"/user/login",
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"username": user.Username,
+				"password": "123456",
+			}),
+		),
+	)
+	jwtToken := w.Result().Cookies()[0].Value
+	w = tests.PerformRequest(
+		router,
+		"GET",
+		"/user/change_password?token="+jwtToken,
+		nil,
+	)
+
+	assert.Equal(t, w.Code, 200)
+
+	w = tests.PerformRequest(
+		router,
+		"POST",
+		"/user/change_password?token="+jwtToken,
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"old_password":  "123456",
+				"new_password":  "123123",
+				"new_password2": "123123",
+			}),
+		),
+	)
+
+	assert.Equal(t, w.Code, 200)
+}
+
+func UserChangePasswordFailure(t *testing.T) {
+	user := models.User{Password: []byte("123456"), IsActive: true}
+	if err := faker.FakeData(&user); err != nil {
+		fmt.Println(err.Error())
+		t.Fail()
+	}
+
+	if err := user.Create(); err != nil {
+		fmt.Println(err.Error())
+		t.Fail()
+	}
+
+	w := tests.PerformRequest(
+		router,
+		"POST",
+		"/user/login",
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"username": user.Username,
+				"password": "123456",
+			}),
+		),
+	)
+	jwtToken := w.Result().Cookies()[0].Value
+
+	// wrong old password
+	w = tests.PerformRequest(
+		router,
+		"POST",
+		"/user/change_password?token="+jwtToken,
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"old_password":  "qweasd",
+				"new_password":  "123123",
+				"new_password2": "123123",
+			}),
+		),
+	)
+
+	assert.Equal(t, w.Code, 400)
+
+	// missing parameters
+	w = tests.PerformRequest(
+		router,
+		"POST",
+		"/user/change_password?token="+jwtToken,
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"old_password": "123456",
+				"new_password": "123123",
+			}),
+		),
+	)
+
+	// new password error
+	w = tests.PerformRequest(
+		router,
+		"POST",
+		"/user/change_password?token="+jwtToken,
+		strings.NewReader(
+			routers.CreateDataParams(map[string]string{
+				"old_password":  "123456",
+				"new_password":  "1231234",
+				"new_password2": "123123",
+			}),
+		),
+	)
+
+	assert.Equal(t, w.Code, 400)
 }

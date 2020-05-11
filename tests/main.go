@@ -23,7 +23,9 @@ func PerformRequest(r http.Handler, method, path string, body io.Reader) *httpte
 	return w
 }
 
-func Setup() {
+var TestConfig *configs.Option
+
+func createEnvironmentConfig() {
 	var options struct {
 		Config      string `short:"c" long:"config"`
 		Environment string `short:"e" long:"environment" default:"test"`
@@ -39,14 +41,17 @@ func Setup() {
 	if err := configs.Init(options.Config, options.Environment); err != nil {
 		log.Panicln(err)
 	}
+	TestConfig = configs.AppConfig
+}
+
+func initDB() {
 	var err error
-	config := configs.AppConfig
 	configs.DB, err = gorm.Open("postgres", configs.DbURL(&configs.DBConfig{
-		Host:     config.Database.Host,
-		Port:     config.Database.Port,
-		User:     config.Database.User,
-		Name:     config.Database.Name,
-		Password: config.Database.Password,
+		Host:     TestConfig.Database.Host,
+		Port:     TestConfig.Database.Port,
+		User:     TestConfig.Database.User,
+		Name:     TestConfig.Database.Name,
+		Password: TestConfig.Database.Password,
 	}))
 
 	configs.DB.AutoMigrate(&models.User{}, &models.UserVerification{})
@@ -54,9 +59,14 @@ func Setup() {
 		log.Panicln(err)
 	}
 }
+func Setup() {
+	createEnvironmentConfig()
+	initDB()
+}
 
 func TearDown() {
 	configs.DB.DropTableIfExists(&models.User{}, &models.UserVerification{})
+	//configs.DB.Close()
 }
 
 func SetupTestRouter() *gin.Engine {
