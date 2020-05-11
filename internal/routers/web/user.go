@@ -18,7 +18,6 @@ func setupUserRouter(router *gin.Engine) *gin.Engine {
 	{
 		user.Use(middlewares.AuthenticationWeb().MiddlewareFunc())
 		user.GET("me", web.UserMe)
-		user.POST("me", web.UserMe)
 		user.GET("change_password", web.UserChangePassword)
 		user.POST("change_password", web.UserChangePassword)
 	}

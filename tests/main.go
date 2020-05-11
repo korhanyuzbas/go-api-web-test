@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"sancap/internal/configs"
+	"sancap/internal/models"
 	"sancap/internal/routers"
 )
 
@@ -22,10 +23,10 @@ func PerformRequest(r http.Handler, method, path string, body io.Reader) *httpte
 	return w
 }
 
-func initConfig() {
+func InitTestConfig() {
 	var options struct {
 		Config      string `short:"c" long:"config"`
-		Environment string `short:"e" long:"environment" default:"development"`
+		Environment string `short:"e" long:"environment" default:"test"`
 	}
 	p := flags.NewParser(&options, flags.Default)
 	if _, err := p.ParseArgs(os.Args[4:]); err != nil {
@@ -48,13 +49,17 @@ func initConfig() {
 		Password: config.Database.Password,
 	}))
 
+	configs.DB.AutoMigrate(&models.User{}, &models.UserVerification{})
 	if err != nil {
 		log.Panicln(err)
 	}
+}
 
+func TruncateDB() {
+	configs.DB.Delete(&models.User{}, &models.UserVerification{})
 }
 
 func SetupTestRouter() *gin.Engine {
-	initConfig()
-	return routers.SetupRouter(true)
+	gin.SetMode(gin.TestMode)
+	return routers.SetupRouter()
 }

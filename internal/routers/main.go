@@ -7,9 +7,9 @@ import (
 	"sancap/internal/routers/web"
 )
 
-func SetupRouter(withTemplates bool) *gin.Engine {
+func SetupRouter() *gin.Engine {
 	r := gin.Default()
-	web.SetupAppRouter(r, withTemplates)
+	web.SetupAppRouter(r)
 	api.SetupAPIRouter(r)
 	return r
 }

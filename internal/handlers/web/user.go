@@ -58,7 +58,7 @@ func UserLogin(ctx *gin.Context) {
 func UserMe(ctx *gin.Context) {
 	authid, _ := ctx.Get(configs.JwtKey)
 	user := authid.(*models.User)
-	ctx.HTML(http.StatusOK, "user.login.html", user)
+	ctx.HTML(http.StatusOK, "user.me.html", gin.H{"user": user})
 }
 
 func UserChangePassword(ctx *gin.Context) {

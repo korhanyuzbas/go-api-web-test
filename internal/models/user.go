@@ -11,14 +11,14 @@ import (
 )
 
 type User struct {
-	gorm.Model
-	FirstName   string `json:"first_name" form:"first_name"`
-	LastName    string `json:"last_name" form:"last_name"`
-	Username    string `json:"username" form:"username" binding:"required" validate:"username-check,required"`
-	Password    []byte `json:"password" form:"password" json:"password"`
-	IsActive    bool   `gorm:"default:false"`
-	IsSuperUser bool   `gorm:"default:false"`
-	DOB         *time.Time
+	gorm.Model  `faker:"-"`
+	FirstName   string     `json:"first_name" form:"first_name" faker:"first_name"`
+	LastName    string     `json:"last_name" form:"last_name" faker:"last_name"`
+	Username    string     `json:"username" form:"username" binding:"required" validate:"username-check,required" faker:"username"`
+	Password    []byte     `json:"password" form:"password" json:"password" faker:"-"`
+	IsActive    bool       `gorm:"default:false" faker:"-"`
+	IsSuperUser bool       `gorm:"default:false" faker:"-"`
+	DOB         *time.Time `faker:"-"`
 }
 
 type UserVerification struct {

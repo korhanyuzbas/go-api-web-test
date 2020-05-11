@@ -13,7 +13,7 @@ import (
 var err error
 
 func runServer(port string) (err error) {
-	router := routers.SetupRouter(true) // setup routers
+	router := routers.SetupRouter() // setup routers
 	return router.Run(":" + port)
 }
 
