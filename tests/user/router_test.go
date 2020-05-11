@@ -3,11 +3,10 @@ package user
 import (
 	"fmt"
 	"github.com/bxcodec/faker/v3"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"os"
 	"regexp"
-	"sancap/internal/configs"
 	"sancap/internal/models"
 	"sancap/internal/routers"
 	"sancap/tests"
@@ -15,17 +14,22 @@ import (
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	fmt.Println("blah blah start")
-	tests.InitTestConfig()
-	code := m.Run()
-	fmt.Println("stoppp blahhh")
-	configs.DB.DropTableIfExists(&models.User{}, &models.UserVerification{})
-	os.Exit(code)
+var router *gin.Engine
+
+func TestStart(t *testing.T) {
+	tests.Setup()
+	router = tests.SetupTestRouter()
+	t.Run("Login", UserLogin)
+	t.Run("Login_MissingParams", UserLoginMissingParams)
+	t.Run("UserLogin_WrongCredentials", UserLoginWrongCredentials)
+	t.Run("UserRegisterSuccess", UserRegisterSuccess)
+	t.Run("UserRegisterMissingFields", UserRegisterMissingFields)
+	t.Run("UserRegisterUsernameExists", UserRegisterUsernameExists)
+	t.Run("UserMe", UserMe)
+	tests.TearDown()
 }
 
-func TestUserLogin(t *testing.T) {
-	router := tests.SetupTestRouter()
+func UserLogin(t *testing.T) {
 
 	w := tests.PerformRequest(
 		router,
@@ -66,8 +70,7 @@ func TestUserLogin(t *testing.T) {
 	assert.Equal(t, w.Code, 200)
 }
 
-func TestUserLogin_MissingParams(t *testing.T) {
-	router := tests.SetupTestRouter()
+func UserLoginMissingParams(t *testing.T) {
 
 	user := models.User{Password: []byte("123456")}
 	if err := faker.FakeData(&user); err != nil {
@@ -94,9 +97,7 @@ func TestUserLogin_MissingParams(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-func TestUserLogin_WrongCredentials(t *testing.T) {
-	router := tests.SetupTestRouter()
-
+func UserLoginWrongCredentials(t *testing.T) {
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -112,9 +113,7 @@ func TestUserLogin_WrongCredentials(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-func TestUserRegister_Success(t *testing.T) {
-	router := tests.SetupTestRouter()
-
+func UserRegisterSuccess(t *testing.T) {
 	// TEST GET REQUEST
 	w := tests.PerformRequest(
 		router,
@@ -146,9 +145,7 @@ func TestUserRegister_Success(t *testing.T) {
 	assert.Equal(t, w.Code, 201)
 }
 
-func TestUserRegister_MissingFields(t *testing.T) {
-	router := tests.SetupTestRouter()
-
+func UserRegisterMissingFields(t *testing.T) {
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -170,11 +167,12 @@ func TestUserRegister_MissingFields(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-func TestUserRegister_UsernameExists(t *testing.T) {
-	router := tests.SetupTestRouter()
+func UserRegisterUsernameExists(t *testing.T) {
 	username := faker.Username()
 	user := models.User{Password: []byte("123456"), Username: username}
-	user.Create()
+	if err := user.Create(); err != nil {
+		t.Fail()
+	}
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -197,9 +195,7 @@ func TestUserRegister_UsernameExists(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-func TestUserMe(t *testing.T) {
-	router := tests.SetupTestRouter()
-
+func UserMe(t *testing.T) {
 	user := models.User{Password: []byte("123456"), IsActive: true}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())

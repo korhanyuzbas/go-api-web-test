@@ -23,7 +23,7 @@ func PerformRequest(r http.Handler, method, path string, body io.Reader) *httpte
 	return w
 }
 
-func InitTestConfig() {
+func Setup() {
 	var options struct {
 		Config      string `short:"c" long:"config"`
 		Environment string `short:"e" long:"environment" default:"test"`
@@ -55,8 +55,8 @@ func InitTestConfig() {
 	}
 }
 
-func TruncateDB() {
-	configs.DB.Delete(&models.User{}, &models.UserVerification{})
+func TearDown() {
+	configs.DB.DropTableIfExists(&models.User{}, &models.UserVerification{})
 }
 
 func SetupTestRouter() *gin.Engine {
