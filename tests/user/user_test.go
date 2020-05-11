@@ -1,4 +1,4 @@
-package user
+package web
 
 import (
 	"fmt"
@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"runtime"
 	"sancap/internal/models"
-	"sancap/internal/routers"
 	"sancap/tests"
 	"strings"
 	"testing"
@@ -25,13 +24,13 @@ func TestUser(t *testing.T) {
 	tests.Setup()
 	router = tests.SetupTestRouter()
 	funcs := []testFunc{
-		UserLogin,
+		UserLoginTest,
 		UserLoginMissingParams,
 		UserLoginWrongCredentials,
 		UserRegisterSuccess,
 		UserRegisterMissingFields,
 		UserRegisterUsernameExists,
-		UserMe,
+		UserMeTest,
 		UserChangePasswordFailure,
 		UserChangePasswordSuccess,
 	}
@@ -47,8 +46,7 @@ func TestUser(t *testing.T) {
 	tests.TearDown()
 }
 
-func UserLogin(t *testing.T) {
-
+func UserLoginTest(t *testing.T) {
 	w := tests.PerformRequest(
 		router,
 		"GET",
@@ -63,17 +61,15 @@ func UserLogin(t *testing.T) {
 		t.Fail()
 	}
 
-	if err := user.Create(); err != nil {
-		fmt.Println(err.Error())
+	if !user.Create() {
 		t.Fail()
 	}
-
 	w = tests.PerformRequest(
 		router,
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": user.Username,
 				"password": "123456",
 			}),
@@ -89,15 +85,13 @@ func UserLogin(t *testing.T) {
 }
 
 func UserLoginMissingParams(t *testing.T) {
-
 	user := models.User{Password: []byte("123456")}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
 
-	if err := user.Create(); err != nil {
-		fmt.Println(err.Error())
+	if !user.Create() {
 		t.Fail()
 	}
 
@@ -106,7 +100,7 @@ func UserLoginMissingParams(t *testing.T) {
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": user.Username,
 			}),
 		),
@@ -121,7 +115,7 @@ func UserLoginWrongCredentials(t *testing.T) {
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": faker.Username(),
 				"password": faker.Password(),
 			}),
@@ -146,7 +140,7 @@ func UserRegisterSuccess(t *testing.T) {
 		"POST",
 		"/user/register",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username":   faker.Username(),
 				"password":   "123456",
 				"first_name": faker.FirstName(),
@@ -169,7 +163,7 @@ func UserRegisterMissingFields(t *testing.T) {
 		"POST",
 		"/user/register",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username":   faker.Username(),
 				"first_name": faker.FirstName(),
 				"last_name":  faker.LastName(),
@@ -188,7 +182,7 @@ func UserRegisterMissingFields(t *testing.T) {
 func UserRegisterUsernameExists(t *testing.T) {
 	username := faker.Username()
 	user := models.User{Password: []byte("123456"), Username: username}
-	if err := user.Create(); err != nil {
+	if !user.Create() {
 		t.Fail()
 	}
 	w := tests.PerformRequest(
@@ -196,7 +190,7 @@ func UserRegisterUsernameExists(t *testing.T) {
 		"POST",
 		"/user/register",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username":   username,
 				"password":   faker.Password(),
 				"first_name": faker.FirstName(),
@@ -211,17 +205,16 @@ func UserRegisterUsernameExists(t *testing.T) {
 		assert.Equal(t, rgx.FindStringSubmatch(string(bodyReader))[1], "Title")
 	}
 	assert.Equal(t, w.Code, 400)
+
 }
 
-func UserMe(t *testing.T) {
+func UserMeTest(t *testing.T) {
 	user := models.User{Password: []byte("123456"), IsActive: true}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-
-	if err := user.Create(); err != nil {
-		fmt.Println(err.Error())
+	if !user.Create() {
 		t.Fail()
 	}
 
@@ -230,7 +223,7 @@ func UserMe(t *testing.T) {
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": user.Username,
 				"password": "123456",
 			}),
@@ -252,9 +245,7 @@ func UserChangePasswordSuccess(t *testing.T) {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-
-	if err := user.Create(); err != nil {
-		fmt.Println(err.Error())
+	if !user.Create() {
 		t.Fail()
 	}
 
@@ -263,7 +254,7 @@ func UserChangePasswordSuccess(t *testing.T) {
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": user.Username,
 				"password": "123456",
 			}),
@@ -284,7 +275,7 @@ func UserChangePasswordSuccess(t *testing.T) {
 		"POST",
 		"/user/change_password?token="+jwtToken,
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"old_password":  "123456",
 				"new_password":  "123123",
 				"new_password2": "123123",
@@ -301,9 +292,7 @@ func UserChangePasswordFailure(t *testing.T) {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-
-	if err := user.Create(); err != nil {
-		fmt.Println(err.Error())
+	if !user.Create() {
 		t.Fail()
 	}
 
@@ -312,7 +301,7 @@ func UserChangePasswordFailure(t *testing.T) {
 		"POST",
 		"/user/login",
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"username": user.Username,
 				"password": "123456",
 			}),
@@ -326,7 +315,7 @@ func UserChangePasswordFailure(t *testing.T) {
 		"POST",
 		"/user/change_password?token="+jwtToken,
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"old_password":  "qweasd",
 				"new_password":  "123123",
 				"new_password2": "123123",
@@ -342,7 +331,7 @@ func UserChangePasswordFailure(t *testing.T) {
 		"POST",
 		"/user/change_password?token="+jwtToken,
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"old_password": "123456",
 				"new_password": "123123",
 			}),
@@ -355,7 +344,7 @@ func UserChangePasswordFailure(t *testing.T) {
 		"POST",
 		"/user/change_password?token="+jwtToken,
 		strings.NewReader(
-			routers.CreateDataParams(map[string]string{
+			tests.CreateTestParams(map[string]string{
 				"old_password":  "123456",
 				"new_password":  "1231234",
 				"new_password2": "123123",

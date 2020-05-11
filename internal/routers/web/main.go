@@ -9,7 +9,7 @@ import (
 func SetupAppRouter(router *gin.Engine) {
 	router.LoadHTMLGlob(configs.AppConfig.TemplateDir)
 
+	setupUserRouter(router)
 	router.GET("/", web.Index)
 
-	setupUserRouter(router)
 }

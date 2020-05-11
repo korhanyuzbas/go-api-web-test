@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"sancap/internal/configs"
 	"sancap/internal/models"
@@ -72,4 +73,12 @@ func TearDown() {
 func SetupTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	return routers.SetupRouter()
+}
+
+func CreateTestParams(params map[string]string) string {
+	values := url.Values{}
+	for key, value := range params {
+		values.Add(key, value)
+	}
+	return values.Encode()
 }

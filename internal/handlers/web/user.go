@@ -26,10 +26,8 @@ func CreateUser(ctx *gin.Context) {
 		Username:  addInput.Username,
 		Password:  []byte(addInput.Password),
 	}
-	if err := user.Create(); err != nil {
-		ctx.HTML(http.StatusBadRequest, "user.register.html", gin.H{"error": err.Error(), "user": nil})
-		return
-	}
+	user.Create()
+
 	ctx.HTML(http.StatusCreated, "user.register.html", gin.H{"user": user, "error": nil})
 }
 
@@ -77,9 +75,7 @@ func UserChangePassword(ctx *gin.Context) {
 		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"user": user, "error": err.Error()})
 		return
 	}
-	if err := user.ChangePassword(changePasswordInput.NewPassword); err != nil {
-		ctx.HTML(http.StatusBadRequest, "user.change_password.html", gin.H{"user": user, "error": err.Error()})
-		return
-	}
+	user.ChangePassword(changePasswordInput.NewPassword)
+
 	ctx.HTML(http.StatusOK, "user.change_password.html", gin.H{"user": user, "error": nil})
 }

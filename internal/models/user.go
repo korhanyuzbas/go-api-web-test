@@ -41,12 +41,13 @@ func (user *User) TableName() string {
 	return "user"
 }
 
-func (user *User) Create() (err error) {
+func (user *User) Create() bool {
 	user.Password = user.HashPassword()
-	if err = configs.DB.Create(user).Error; err != nil {
-		return err
+	if err := configs.DB.Create(user).Error; err != nil {
+		log.Panicln(err.Error())
+		return false
 	}
-	return nil
+	return true
 }
 
 func (user *User) IsUsernameAvailable(username string) bool {
@@ -85,9 +86,10 @@ func (user *User) IsCorrectPassword(password string) bool {
 	return bcrypt.CompareHashAndPassword(user.Password, []byte(password)) == nil
 }
 
-func (user *User) ChangePassword(password string) error {
-	if err := configs.DB.Model(&user).Update("password", utils.HashPassword(password)); err != nil {
-		return err.Error
+func (user *User) ChangePassword(password string) bool {
+	if err := configs.DB.Model(&user).Update("password", utils.HashPassword(password)).Error; err != nil {
+		log.Panicln(err)
+		return false
 	}
-	return nil
+	return true
 }
