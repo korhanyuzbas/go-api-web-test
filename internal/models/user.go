@@ -5,8 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"log"
-	"sancap/internal/configs"
-	"sancap/internal/utils"
+	"sancap/internal/helpers"
 	"time"
 )
 
@@ -41,31 +40,31 @@ func (user *User) TableName() string {
 	return "user"
 }
 
-func (user *User) Create() bool {
+func (user *User) Create(db *gorm.DB) bool {
 	user.Password = user.HashPassword()
-	if err := configs.DB.Create(user).Error; err != nil {
+	if err := db.Create(user).Error; err != nil {
 		log.Panicln(err.Error())
 		return false
 	}
 	return true
 }
 
-func (user *User) IsUsernameAvailable(username string) bool {
-	if configs.DB.Where("username = ?", username).First(user).RecordNotFound() {
+func (user *User) IsUsernameAvailable(db *gorm.DB, username string) bool {
+	if db.Where("username = ?", username).First(user).RecordNotFound() {
 		return true
 	}
 	return false
 }
 
-func (user *User) GetByName(username string) (err error) {
-	if err = configs.DB.Where("username = ?", username).Find(&user).Error; err != nil {
+func (user *User) GetByName(db *gorm.DB, username string) (err error) {
+	if err = db.Where("username = ?", username).Find(&user).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (user *User) GetCredentials(password string) error {
-	if err := configs.DB.Where("username = ?", user.Username).Find(user).Error; err != nil {
+func (user *User) GetCredentials(db *gorm.DB, password string) error {
+	if err := db.Where("username = ?", user.Username).Find(user).Error; err != nil {
 		return err
 	}
 	if user.IsCorrectPassword(password) {
@@ -86,8 +85,8 @@ func (user *User) IsCorrectPassword(password string) bool {
 	return bcrypt.CompareHashAndPassword(user.Password, []byte(password)) == nil
 }
 
-func (user *User) ChangePassword(password string) bool {
-	if err := configs.DB.Model(&user).Update("password", utils.HashPassword(password)).Error; err != nil {
+func (user *User) ChangePassword(db *gorm.DB, password string) bool {
+	if err := db.Model(&user).Update("password", helpers.HashPassword(password)).Error; err != nil {
 		log.Panicln(err)
 		return false
 	}

@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestAPIRoot(t *testing.T) {
-	createEnvironmentConfig()
-	router := SetupTestRouter()
+func UTestAPIRoot(t *testing.T) {
+	//createEnvironmentConfig()
+	_, router := SetupTestRouter()
 
 	w := PerformRequest(
 		router,

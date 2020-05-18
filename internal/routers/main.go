@@ -2,13 +2,13 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"sancap/internal/routers/api"
-	"sancap/internal/routers/web"
+	"github.com/jinzhu/gorm"
+	"sancap/internal/handlers"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *gorm.DB) (handlers.BaseHandler, *gin.Engine) {
 	r := gin.Default()
-	web.SetupAppRouter(r)
-	api.SetupAPIRouter(r)
-	return r
+	handler := handlers.BaseHandler{DB: db}
+	SetupAppRouter(r, handler)
+	return handler, r
 }

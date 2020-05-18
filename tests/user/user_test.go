@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"github.com/bxcodec/faker/v3"
 	"github.com/gin-gonic/gin"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
+	"sancap/internal/handlers"
 	"sancap/internal/models"
 	"sancap/tests"
 	"strings"
 	"testing"
 )
 
-var router *gin.Engine
-
-type testFunc func(t *testing.T)
+type testFunc func(t *testing.T, router *gin.Engine, handler handlers.BaseHandler)
 
 func TestUser(t *testing.T) {
-	tests.Setup()
-	router = tests.SetupTestRouter()
+	tests.SetupTest()
+
 	funcs := []testFunc{
 		UserLoginTest,
 		UserLoginMissingParams,
@@ -40,13 +40,14 @@ func TestUser(t *testing.T) {
 		funcName = filepath.Ext(funcName)
 		funcName = strings.TrimPrefix(funcName, ".")
 		t.Run(funcName, func(t *testing.T) {
-			f(t)
+			t.Parallel()
+			h, r := tests.SetupTestRouter()
+			f(t, r, h)
 		})
 	}
-	tests.TearDown()
 }
 
-func UserLoginTest(t *testing.T) {
+func UserLoginTest(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	w := tests.PerformRequest(
 		router,
 		"GET",
@@ -61,7 +62,7 @@ func UserLoginTest(t *testing.T) {
 		t.Fail()
 	}
 
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
 	w = tests.PerformRequest(
@@ -82,19 +83,19 @@ func UserLoginTest(t *testing.T) {
 		assert.Equal(t, rgx.FindStringSubmatch(string(bodyReader))[1], "Title")
 	}
 	assert.Equal(t, w.Code, 200)
+	handler.DB.Close()
 }
 
-func UserLoginMissingParams(t *testing.T) {
+func UserLoginMissingParams(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	user := models.User{Password: []byte("123456")}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
 
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
-
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -106,10 +107,10 @@ func UserLoginMissingParams(t *testing.T) {
 		),
 	)
 
-	assert.Equal(t, w.Code, 400)
+	assert.Equal(t, w.Code, 401)
 }
 
-func UserLoginWrongCredentials(t *testing.T) {
+func UserLoginWrongCredentials(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -122,10 +123,10 @@ func UserLoginWrongCredentials(t *testing.T) {
 		),
 	)
 
-	assert.Equal(t, w.Code, 400)
+	assert.Equal(t, w.Code, 401)
 }
 
-func UserRegisterSuccess(t *testing.T) {
+func UserRegisterSuccess(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	// TEST GET REQUEST
 	w := tests.PerformRequest(
 		router,
@@ -157,7 +158,7 @@ func UserRegisterSuccess(t *testing.T) {
 	assert.Equal(t, w.Code, 201)
 }
 
-func UserRegisterMissingFields(t *testing.T) {
+func UserRegisterMissingFields(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	w := tests.PerformRequest(
 		router,
 		"POST",
@@ -179,10 +180,10 @@ func UserRegisterMissingFields(t *testing.T) {
 	assert.Equal(t, w.Code, 400)
 }
 
-func UserRegisterUsernameExists(t *testing.T) {
+func UserRegisterUsernameExists(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	username := faker.Username()
 	user := models.User{Password: []byte("123456"), Username: username}
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
 	w := tests.PerformRequest(
@@ -208,13 +209,13 @@ func UserRegisterUsernameExists(t *testing.T) {
 
 }
 
-func UserMeTest(t *testing.T) {
+func UserMeTest(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	user := models.User{Password: []byte("123456"), IsActive: true}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
 
@@ -239,13 +240,13 @@ func UserMeTest(t *testing.T) {
 	assert.Equal(t, w.Code, 200)
 }
 
-func UserChangePasswordSuccess(t *testing.T) {
+func UserChangePasswordSuccess(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	user := models.User{Password: []byte("123456"), IsActive: true}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
 
@@ -286,13 +287,13 @@ func UserChangePasswordSuccess(t *testing.T) {
 	assert.Equal(t, w.Code, 200)
 }
 
-func UserChangePasswordFailure(t *testing.T) {
+func UserChangePasswordFailure(t *testing.T, router *gin.Engine, handler handlers.BaseHandler) {
 	user := models.User{Password: []byte("123456"), IsActive: true}
 	if err := faker.FakeData(&user); err != nil {
 		fmt.Println(err.Error())
 		t.Fail()
 	}
-	if !user.Create() {
+	if !user.Create(handler.DB) {
 		t.Fail()
 	}
 

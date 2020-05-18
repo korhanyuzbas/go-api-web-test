@@ -1,4 +1,4 @@
-package utils
+package helpers
 
 import (
 	jwt "github.com/appleboy/gin-jwt/v2"

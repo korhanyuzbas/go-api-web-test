@@ -2,10 +2,9 @@ package configs
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 )
 
-var DB *gorm.DB
+//var DB *gorm.DB
 
 type DBConfig struct {
 	Host     string
@@ -13,17 +12,6 @@ type DBConfig struct {
 	User     string
 	Name     string
 	Password string
-}
-
-func BuildDBConfig() *DBConfig {
-	dbConfig := DBConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "postgres",
-		Name:     "gorestful",
-		Password: "postgres",
-	}
-	return &dbConfig
 }
 
 func DbURL(dbConfig *DBConfig) string {

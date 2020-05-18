@@ -8,11 +8,12 @@ import (
 	trTranslations "github.com/go-playground/validator/v10/translations/tr"
 	"log"
 	"sancap/internal/configs"
+	"sancap/internal/handlers"
 	"sancap/internal/i18n"
 	"sancap/internal/validations"
 )
 
-func TranslationMiddleware() gin.HandlerFunc {
+func TranslationMiddleware(handler handlers.BaseHandler) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		enLang := en.New()
 
@@ -26,7 +27,7 @@ func TranslationMiddleware() gin.HandlerFunc {
 			log.Panicln(err)
 		}
 
-		validations.InitValidations(validate)
+		validations.InitValidations(validate, handler)
 		i18n.InitTranslations(validate, trans)
 
 		c.Set(configs.TranslatorKey, trans)

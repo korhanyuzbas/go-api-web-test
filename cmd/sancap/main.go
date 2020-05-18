@@ -10,10 +10,8 @@ import (
 	"sancap/internal/routers"
 )
 
-var err error
-
-func runServer(port string) (err error) {
-	router := routers.SetupRouter() // setup routers
+func runServer(port string, db *gorm.DB) error {
+	_, router := routers.SetupRouter(db) // setup routers
 	return router.Run(":" + port)
 }
 
@@ -36,7 +34,7 @@ func main() {
 
 	config := configs.AppConfig
 
-	configs.DB, err = gorm.Open("postgres", configs.DbURL(&configs.DBConfig{
+	db, err := gorm.Open("postgres", configs.DbURL(&configs.DBConfig{
 		Host:     config.Database.Host,
 		Port:     config.Database.Port,
 		User:     config.Database.User,
@@ -48,7 +46,7 @@ func main() {
 		log.Panicln(err)
 	}
 
-	defer configs.DB.Close()
-	configs.DB.AutoMigrate(&models.User{}, &models.UserVerification{})
-	log.Panicln(runServer(config.HTTP.Port))
+	defer db.Close()
+	db.AutoMigrate(&models.User{}, &models.UserVerification{})
+	log.Panicln(runServer(config.HTTP.Port, db))
 }

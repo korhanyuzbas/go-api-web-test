@@ -4,14 +4,16 @@ import (
 	"github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"sancap/internal/configs"
 	"sancap/internal/dto"
+	"sancap/internal/handlers"
+	"sancap/internal/helpers"
 	"sancap/internal/models"
-	"sancap/internal/utils"
 	"time"
 )
 
-func getDefaultMiddleware(cookie bool) *jwt.GinJWTMiddleware {
+func getDefaultMiddleware(cookie bool, handler handlers.BaseHandler) *jwt.GinJWTMiddleware {
 	return &jwt.GinJWTMiddleware{
 		Realm:       "test",
 		Key:         []byte(configs.AppConfig.SecretKey),
@@ -45,7 +47,7 @@ func getDefaultMiddleware(cookie bool) *jwt.GinJWTMiddleware {
 				Password: []byte(password),
 			}
 
-			if err := user.GetCredentials(userLoginInput.Password); err != nil {
+			if err := user.GetCredentials(handler.DB, userLoginInput.Password); err != nil {
 				return nil, err
 			}
 			return &user, nil
@@ -53,7 +55,7 @@ func getDefaultMiddleware(cookie bool) *jwt.GinJWTMiddleware {
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			var authModel models.User
 			if v, ok := data.(*models.User); ok {
-				if err := authModel.GetByName(v.Username); err != nil {
+				if err := authModel.GetByName(handler.DB, v.Username); err != nil {
 					return false
 				}
 				if !authModel.IsActive {
@@ -76,10 +78,14 @@ func getDefaultMiddleware(cookie bool) *jwt.GinJWTMiddleware {
 	}
 }
 
-func AuthenticationWeb() *jwt.GinJWTMiddleware {
-	defaultMiddleware := getDefaultMiddleware(true)
+func AuthenticationWeb(handler handlers.BaseHandler) *jwt.GinJWTMiddleware {
+	defaultMiddleware := getDefaultMiddleware(true, handler)
 	defaultMiddleware.LoginResponse = func(context *gin.Context, i int, s string, t time.Time) {
-		utils.SetJWTCookie(s, context, defaultMiddleware)
+		helpers.SetJWTCookie(s, context, defaultMiddleware)
+		context.HTML(http.StatusOK, "user.login.html", gin.H{"error": nil, "user": nil})
+	}
+	defaultMiddleware.Unauthorized = func(context *gin.Context, i int, s string) {
+		context.HTML(i, "user.login.html", gin.H{"error": s, "user": nil})
 	}
 
 	authMiddleware, authErr := jwt.New(defaultMiddleware)
@@ -90,8 +96,8 @@ func AuthenticationWeb() *jwt.GinJWTMiddleware {
 	return authMiddleware
 }
 
-func AuthenticationAPI() *jwt.GinJWTMiddleware {
-	defaultMiddleware := getDefaultMiddleware(false)
+func AuthenticationAPI(handler handlers.BaseHandler) *jwt.GinJWTMiddleware {
+	defaultMiddleware := getDefaultMiddleware(false, handler)
 
 	authMiddleware, authErr := jwt.New(defaultMiddleware)
 	if authErr != nil {

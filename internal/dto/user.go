@@ -2,7 +2,7 @@ package dto
 
 import (
 	"github.com/gin-gonic/gin"
-	"sancap/internal/utils"
+	"sancap/internal/helpers"
 )
 
 type CreateUserInput struct {
@@ -13,7 +13,7 @@ type CreateUserInput struct {
 }
 
 func (params *CreateUserInput) ShouldBind(ctx *gin.Context) error {
-	return utils.BindParams(ctx, params)
+	return helpers.BindParams(ctx, params)
 }
 
 type LoginUserInput struct {
@@ -22,7 +22,7 @@ type LoginUserInput struct {
 }
 
 func (params *LoginUserInput) ShouldBind(ctx *gin.Context) error {
-	return utils.BindParams(ctx, params)
+	return helpers.BindParams(ctx, params)
 }
 
 type ChangePasswordInput struct {
@@ -32,5 +32,5 @@ type ChangePasswordInput struct {
 }
 
 func (params *ChangePasswordInput) ShouldBind(ctx *gin.Context) error {
-	return utils.BindParams(ctx, params)
+	return helpers.BindParams(ctx, params)
 }
